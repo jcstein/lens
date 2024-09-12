@@ -44,7 +44,11 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            display: none; /* Initially hidden */
+            transition: opacity 0.3s ease;
+        }
+        #switchCamera:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         @media (max-width: 768px) {
             .container {
@@ -57,7 +61,7 @@
     <div class="container">
         <div id="camera">
             <video autoplay playsinline></video>
-            <button id="switchCamera">Switch Camera</button>
+            <button id="switchCamera" disabled>Switch Camera</button>
         </div>
         <div id="lumina">
             <iframe src="https://lumina.rs" allow="camera; microphone; fullscreen; display-capture; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
@@ -103,12 +107,12 @@
         // Initial camera start
         startVideo();
 
-        // Check if the device has multiple cameras and show/hide button accordingly
+        // Check if the device has multiple cameras and enable/disable button accordingly
         getVideoDevices().then(devices => {
             if (devices.length > 1) {
-                switchButton.style.display = 'block';
+                switchButton.disabled = false;
             } else {
-                switchButton.style.display = 'none';
+                switchButton.disabled = true;
             }
         });
     </script>
