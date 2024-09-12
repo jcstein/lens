@@ -46,15 +46,9 @@
             font-size: 16px;
             display: none;
         }
-        #debug {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            padding: 5px;
-            font-size: 12px;
-            z-index: 20;
+        #switchCamera:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         @media (max-width: 768px) {
             .container {
@@ -68,7 +62,6 @@
         <div id="camera">
             <video autoplay playsinline></video>
             <button id="switchCamera">Switch Camera</button>
-            <div id="debug"></div>
         </div>
         <div id="lumina">
             <iframe src="https://lumina.rs" allow="camera; microphone; fullscreen; display-capture; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
@@ -77,14 +70,9 @@
     <script>
         const video = document.querySelector('video');
         const switchButton = document.getElementById('switchCamera');
-        const debugElement = document.getElementById('debug');
         let currentStreamTrack = null;
         let isUsingFrontCamera = true;
-
-        function log(message) {
-            console.log(message);
-            debugElement.textContent += message + '\n';
-        }
+        let hasMutipleCameras = false;
 
         async function startVideo(useFrontCamera = true) {
             const facingMode = useFrontCamera ? 'user' : 'environment';
@@ -95,38 +83,35 @@
                 if (currentStreamTrack) {
                     currentStreamTrack.stop();
                 }
-                log(`Starting video with facingMode: ${facingMode}`);
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 currentStreamTrack = stream.getVideoTracks()[0];
-                log(`Started video with label: ${currentStreamTrack.label}`);
                 isUsingFrontCamera = useFrontCamera;
             } catch (error) {
-                log(`Error accessing camera: ${error.message}`);
+                console.error('Error accessing camera:', error);
             }
         }
 
         async function switchCamera() {
-            log('Switching camera');
-            await startVideo(!isUsingFrontCamera);
+            if (hasMutipleCameras) {
+                await startVideo(!isUsingFrontCamera);
+            }
         }
 
         switchButton.addEventListener('click', switchCamera);
 
-        // Initial setup
         async function initialize() {
             try {
-                // First, try to access any camera
                 await startVideo();
                 
-                // Then, check if we can switch to the back camera
+                // Check if we can switch to the back camera
                 await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 
                 // If we reach here, both cameras are accessible
+                hasMutipleCameras = true;
                 switchButton.style.display = 'block';
-                log('Multiple cameras available, showing switch button');
             } catch (error) {
-                log(`Only one camera available or error: ${error.message}`);
+                hasMutipleCameras = false;
                 switchButton.style.display = 'none';
             }
         }
