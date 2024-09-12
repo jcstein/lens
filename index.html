@@ -30,6 +30,18 @@
             height: 100%;
             border: none;
         }
+        #switchCamera {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 10;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -41,21 +53,61 @@
     <div class="container">
         <div id="camera">
             <video autoplay playsinline></video>
+            <button id="switchCamera">Switch Camera</button>
         </div>
         <div id="lumina">
-            <iframe src="https://app.lumina.ai/"></iframe>
+            <iframe src="https://lumina.rs" allow="camera; microphone; fullscreen; display-capture; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
         </div>
     </div>
 
     <script>
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                const video = document.querySelector('video');
+        const video = document.querySelector('video');
+        const switchButton = document.getElementById('switchCamera');
+        let currentStreamTrack = null;
+
+        async function getVideoDevices() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            return devices.filter(device => device.kind === 'videoinput');
+        }
+
+        async function startVideo(deviceId = null) {
+            const constraints = {
+                video: deviceId ? { deviceId: { exact: deviceId } } : true
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
-            })
-            .catch(error => {
+                currentStreamTrack = stream.getVideoTracks()[0];
+            } catch (error) {
                 console.error('Error accessing camera:', error);
-            });
+            }
+        }
+
+        async function switchCamera() {
+            const devices = await getVideoDevices();
+            const currentDevice = currentStreamTrack?.getSettings().deviceId;
+            const nextDevice = devices.find(d => d.deviceId !== currentDevice);
+
+            if (nextDevice) {
+                if (currentStreamTrack) {
+                    currentStreamTrack.stop();
+                }
+                await startVideo(nextDevice.deviceId);
+            }
+        }
+
+        switchButton.addEventListener('click', switchCamera);
+
+        // Initial camera start
+        startVideo();
+
+        // Check if the device has multiple cameras
+        getVideoDevices().then(devices => {
+            if (devices.length <= 1) {
+                switchButton.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
