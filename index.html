@@ -24,6 +24,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            background-color: #000; /* Dark background instead of white */
         }
         #camera video.mirrored {
             transform: scaleX(-1);
@@ -48,6 +49,18 @@
             font-size: 16px;
             display: none;
         }
+        #loadingIndicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -60,6 +73,7 @@
         <div id="camera">
             <video autoplay playsinline></video>
             <button id="switchCamera">Switch Camera</button>
+            <div id="loadingIndicator">Loading camera...</div>
         </div>
         <div id="lumina">
             <iframe src="https://lumina.rs" allow="camera; microphone; fullscreen; display-capture; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
@@ -68,6 +82,7 @@
     <script>
         const video = document.querySelector('video');
         const switchButton = document.getElementById('switchCamera');
+        const loadingIndicator = document.getElementById('loadingIndicator');
         let currentStreamTrack = null;
         let isUsingFrontCamera = true;
         let hasMutipleCameras = false;
@@ -82,6 +97,7 @@
         }
 
         async function startVideo(useFrontCamera = true) {
+            loadingIndicator.style.display = 'block';
             const facingMode = useFrontCamera ? 'user' : 'environment';
             const constraints = {
                 video: { facingMode: facingMode }
@@ -95,8 +111,17 @@
                 currentStreamTrack = stream.getVideoTracks()[0];
                 isUsingFrontCamera = useFrontCamera;
                 updateMirrorEffect();
+                
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
             } catch (error) {
                 console.error('Error accessing camera:', error);
+            } finally {
+                loadingIndicator.style.display = 'none';
             }
         }
 
