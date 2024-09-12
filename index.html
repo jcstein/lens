@@ -18,6 +18,7 @@
         #camera, #lumina {
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
         #camera video {
             width: 100%;
@@ -32,15 +33,17 @@
         }
         #switchCamera {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 10;
-            padding: 10px;
-            background-color: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            background-color: rgba(0,0,0,0.7);
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
         }
         @media (max-width: 768px) {
             .container {
@@ -104,7 +107,9 @@
 
         // Check if the device has multiple cameras
         getVideoDevices().then(devices => {
-            if (devices.length <= 1) {
+            if (devices.length > 1) {
+                switchButton.style.display = 'block';
+            } else {
                 switchButton.style.display = 'none';
             }
         });
