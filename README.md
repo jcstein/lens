@@ -8,6 +8,10 @@ To allow DASers to show their light node and view, without a second device!
 
 ## Screenshots
 
+### Desktop
+
+<img width="1582" alt="Screenshot 2024-09-12 at 3 37 08 PM" src="https://github.com/user-attachments/assets/86050ec5-7deb-4744-8c94-0923287098cd">
+
 ### Mobile
 
 <img width="300" alt="Lumina.rs lens running on iPhone" src="https://github.com/user-attachments/assets/f9ebdef6-a5e3-4baa-9bbc-a6d3db381b9e">
