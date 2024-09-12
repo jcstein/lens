@@ -79,34 +79,28 @@
         const switchButton = document.getElementById('switchCamera');
         const debugElement = document.getElementById('debug');
         let currentStreamTrack = null;
-        let cameras = [];
-        let currentCameraIndex = 0;
+        let isUsingFrontCamera = true;
 
         function log(message) {
             console.log(message);
             debugElement.textContent += message + '\n';
         }
 
-        async function getVideoDevices() {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            cameras = devices.filter(device => device.kind === 'videoinput');
-            log(`Found ${cameras.length} cameras`);
-            return cameras;
-        }
-
-        async function startVideo(deviceId = null) {
+        async function startVideo(useFrontCamera = true) {
+            const facingMode = useFrontCamera ? 'user' : 'environment';
             const constraints = {
-                video: deviceId ? { deviceId: { exact: deviceId } } : true
+                video: { facingMode: facingMode }
             };
             try {
                 if (currentStreamTrack) {
                     currentStreamTrack.stop();
                 }
-                log(`Starting video with deviceId: ${deviceId || 'default'}`);
+                log(`Starting video with facingMode: ${facingMode}`);
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 currentStreamTrack = stream.getVideoTracks()[0];
                 log(`Started video with label: ${currentStreamTrack.label}`);
+                isUsingFrontCamera = useFrontCamera;
             } catch (error) {
                 log(`Error accessing camera: ${error.message}`);
             }
@@ -114,28 +108,27 @@
 
         async function switchCamera() {
             log('Switching camera');
-            currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
-            const nextCamera = cameras[currentCameraIndex];
-            if (nextCamera) {
-                log(`Switching to camera: ${nextCamera.label}`);
-                await startVideo(nextCamera.deviceId);
-            } else {
-                log('No next camera found');
-            }
+            await startVideo(!isUsingFrontCamera);
         }
 
         switchButton.addEventListener('click', switchCamera);
 
         // Initial setup
         async function initialize() {
-            await getVideoDevices();
-            if (cameras.length > 1) {
+            try {
+                // First, try to access any camera
+                await startVideo();
+                
+                // Then, check if we can switch to the back camera
+                await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                
+                // If we reach here, both cameras are accessible
                 switchButton.style.display = 'block';
                 log('Multiple cameras available, showing switch button');
-            } else {
-                log('Only one camera available, hiding switch button');
+            } catch (error) {
+                log(`Only one camera available or error: ${error.message}`);
+                switchButton.style.display = 'none';
             }
-            await startVideo();
         }
 
         initialize();
