@@ -44,6 +44,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            display: none; /* Initially hidden */
         }
         @media (max-width: 768px) {
             .container {
@@ -62,7 +63,6 @@
             <iframe src="https://lumina.rs" allow="camera; microphone; fullscreen; display-capture; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
         </div>
     </div>
-
     <script>
         const video = document.querySelector('video');
         const switchButton = document.getElementById('switchCamera');
@@ -77,7 +77,6 @@
             const constraints = {
                 video: deviceId ? { deviceId: { exact: deviceId } } : true
             };
-
             try {
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
@@ -91,7 +90,6 @@
             const devices = await getVideoDevices();
             const currentDevice = currentStreamTrack?.getSettings().deviceId;
             const nextDevice = devices.find(d => d.deviceId !== currentDevice);
-
             if (nextDevice) {
                 if (currentStreamTrack) {
                     currentStreamTrack.stop();
@@ -105,7 +103,7 @@
         // Initial camera start
         startVideo();
 
-        // Check if the device has multiple cameras
+        // Check if the device has multiple cameras and show/hide button accordingly
         getVideoDevices().then(devices => {
             if (devices.length > 1) {
                 switchButton.style.display = 'block';
