@@ -44,11 +44,17 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            transition: opacity 0.3s ease;
+            display: none;
         }
-        #switchCamera:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        #debug {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px;
+            font-size: 12px;
+            z-index: 20;
         }
         @media (max-width: 768px) {
             .container {
@@ -61,7 +67,8 @@
     <div class="container">
         <div id="camera">
             <video autoplay playsinline></video>
-            <button id="switchCamera" disabled>Switch Camera</button>
+            <button id="switchCamera">Switch Camera</button>
+            <div id="debug"></div>
         </div>
         <div id="lumina">
             <iframe src="https://lumina.rs" allow="camera; microphone; fullscreen; display-capture; autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
@@ -70,11 +77,21 @@
     <script>
         const video = document.querySelector('video');
         const switchButton = document.getElementById('switchCamera');
+        const debugElement = document.getElementById('debug');
         let currentStreamTrack = null;
+        let cameras = [];
+        let currentCameraIndex = 0;
+
+        function log(message) {
+            console.log(message);
+            debugElement.textContent += message + '\n';
+        }
 
         async function getVideoDevices() {
             const devices = await navigator.mediaDevices.enumerateDevices();
-            return devices.filter(device => device.kind === 'videoinput');
+            cameras = devices.filter(device => device.kind === 'videoinput');
+            log(`Found ${cameras.length} cameras`);
+            return cameras;
         }
 
         async function startVideo(deviceId = null) {
@@ -82,39 +99,46 @@
                 video: deviceId ? { deviceId: { exact: deviceId } } : true
             };
             try {
+                if (currentStreamTrack) {
+                    currentStreamTrack.stop();
+                }
+                log(`Starting video with deviceId: ${deviceId || 'default'}`);
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
                 currentStreamTrack = stream.getVideoTracks()[0];
+                log(`Started video with label: ${currentStreamTrack.label}`);
             } catch (error) {
-                console.error('Error accessing camera:', error);
+                log(`Error accessing camera: ${error.message}`);
             }
         }
 
         async function switchCamera() {
-            const devices = await getVideoDevices();
-            const currentDevice = currentStreamTrack?.getSettings().deviceId;
-            const nextDevice = devices.find(d => d.deviceId !== currentDevice);
-            if (nextDevice) {
-                if (currentStreamTrack) {
-                    currentStreamTrack.stop();
-                }
-                await startVideo(nextDevice.deviceId);
+            log('Switching camera');
+            currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+            const nextCamera = cameras[currentCameraIndex];
+            if (nextCamera) {
+                log(`Switching to camera: ${nextCamera.label}`);
+                await startVideo(nextCamera.deviceId);
+            } else {
+                log('No next camera found');
             }
         }
 
         switchButton.addEventListener('click', switchCamera);
 
-        // Initial camera start
-        startVideo();
-
-        // Check if the device has multiple cameras and enable/disable button accordingly
-        getVideoDevices().then(devices => {
-            if (devices.length > 1) {
-                switchButton.disabled = false;
+        // Initial setup
+        async function initialize() {
+            await getVideoDevices();
+            if (cameras.length > 1) {
+                switchButton.style.display = 'block';
+                log('Multiple cameras available, showing switch button');
             } else {
-                switchButton.disabled = true;
+                log('Only one camera available, hiding switch button');
             }
-        });
+            await startVideo();
+        }
+
+        initialize();
     </script>
 </body>
 </html>
