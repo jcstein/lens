@@ -69,10 +69,9 @@
         const video = document.querySelector('video');
         const switchButton = document.getElementById('switchCamera');
         let currentStreamTrack = null;
-        let isUsingFrontCamera = false;
+        let isUsingFrontCamera = true;
         let hasMutipleCameras = false;
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
         function updateMirrorEffect() {
             if (isUsingFrontCamera || !isMobile) {
@@ -82,7 +81,7 @@
             }
         }
 
-        async function startVideo(useFrontCamera = false) {
+        async function startVideo(useFrontCamera = true) {
             const facingMode = useFrontCamera ? 'user' : 'environment';
             const constraints = {
                 video: { facingMode: facingMode }
@@ -111,11 +110,10 @@
 
         async function initialize() {
             try {
-                // Start with back camera on mobile, front camera on desktop
-                await startVideo(false);
+                await startVideo();
                 
-                // Check if we can switch to the other camera
-                await navigator.mediaDevices.getUserMedia({ video: { facingMode: isIOS ? 'user' : 'environment' } });
+                // Check if we can switch to the back camera
+                await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 
                 // If we reach here, both cameras are accessible
                 hasMutipleCameras = true;
