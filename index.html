@@ -10,6 +10,7 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
         .container {
             display: flex;
@@ -48,6 +49,39 @@
             font-size: 16px;
             display: none;
         }
+        #privacyPopup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #privacyContent {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 80%;
+            text-align: center;
+        }
+        #acceptPrivacy {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #sourceLink {
+            margin-top: 10px;
+            font-size: 14px;
+        }
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -56,6 +90,16 @@
     </style>
 </head>
 <body>
+    <div id="privacyPopup">
+        <div id="privacyContent">
+            <h2>Privacy Notice</h2>
+            <p>This site is static and runs entirely in your browser. No video feed or camera data is sent or stored anywhere. Your privacy is fully protected.</p>
+            <button id="acceptPrivacy">I Understand</button>
+            <div id="sourceLink">
+                <a href="https://github.com/jcstein/lens/blob/main/index.html" target="_blank" rel="noopener noreferrer">View Source Code</a>
+            </div>
+        </div>
+    </div>
     <div class="container">
         <div id="camera">
             <video autoplay playsinline></video>
@@ -68,6 +112,8 @@
     <script>
         const video = document.querySelector('video');
         const switchButton = document.getElementById('switchCamera');
+        const privacyPopup = document.getElementById('privacyPopup');
+        const acceptPrivacyButton = document.getElementById('acceptPrivacy');
         let currentStream = null;
         let isUsingFrontCamera = true;
         let hasMutipleCameras = false;
@@ -126,7 +172,10 @@
             }
         }
 
-        initialize();
+        acceptPrivacyButton.addEventListener('click', () => {
+            privacyPopup.style.display = 'none';
+            initialize();
+        });
 
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentStream && currentStream.active) {
